@@ -117,6 +117,7 @@ class LlavaFuser:
                 module.post_attention_layernorm.weight,
                 module.post_attention_layernorm.variance_epsilon,
             )
+            
             blocks.append(
                 LlamaLikeBlock(
                     hidden_size=self.model.config.hidden_size,
@@ -128,7 +129,7 @@ class LlavaFuser:
                     norm_1=norm_1,
                     norm_2=norm_2,
                     dev=device,
-                    max_seq_len=2048, #self.model.config.max_seq_len,
+                    max_seq_len=self.model.config.max_seq_len if hasattr(self.model.config, "max_seq_len") else self.model.config.tokenizer_model_max_length
                 )
             )
 
