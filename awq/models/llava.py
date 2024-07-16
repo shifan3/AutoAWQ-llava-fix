@@ -32,7 +32,7 @@ class LlavaAWQForCausalLM(BaseAWQForCausalLM):
 
     @staticmethod
     def move_embed(model: OldLlavaForConditionalGeneration, device: str):
-        model.language_model.model.embed_tokens = model.get_input_embeddings().to(
+        model.language_model.model.embed_tokens = model.language_model.model.embed_tokens.to(
             device
         )
 
@@ -95,7 +95,7 @@ class LlavaFuser:
         self.llama_blocks: List[Tuple[str, OldLlamaDecoderLayer]] = [
             (name, module)
             for name, module in self.model.named_modules()
-            if "LlamaDecoderLayer".lower() in module.__class__.__name__.lower()
+            if "DecoderLayer".lower() in module.__class__.__name__.lower()
         ]
 
     def fuse_transformer(self):
@@ -128,7 +128,7 @@ class LlavaFuser:
                     norm_1=norm_1,
                     norm_2=norm_2,
                     dev=device,
-                    max_seq_len=self.model.config.max_seq_len,
+                    max_seq_len=2048, #self.model.config.max_seq_len,
                 )
             )
 

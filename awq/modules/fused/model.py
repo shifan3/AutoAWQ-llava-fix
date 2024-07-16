@@ -101,22 +101,31 @@ class LlamaLikeModel(nn.Module):
         attn_bias=None,
         attention_mask=None,
         is_causal=None,
+        inputs_embeds = None,
         *args,
         **kwargs,
     ):
-        input_ids, self.last_forward_num_tokens = fused_utils.prepare_input_ids(
-            input_ids, self.last_forward_num_tokens
-        )
-        _bsz, seqlen = input_ids.shape
+        if input_ids is not None:
+            input_ids, self.last_forward_num_tokens = fused_utils.prepare_input_ids(
+                input_ids, self.last_forward_num_tokens
+            )
+            _bsz, seqlen = input_ids.shape
 
+            h = self.embedding(input_ids)
+        else:
+            _, self.last_forward_num_tokens = fused_utils.prepare_input_ids(
+                torch.sum(inputs_embeds, dim=2), self.last_forward_num_tokens
+            )
+            h = inputs_embeds
+            _bsz, seqlen, _ = h.shape
         fused_utils.prepare_cache(self.blocks, seqlen)
+            
 
-        h = self.embedding(input_ids)
 
         mask = fused_utils.prepare_attention_mask(
             seqlen=seqlen,
             start_pos=self.blocks[0].attn.start_pos,
-            device=input_ids.device,
+            device=h.device,
             type_as=h,
         )
 

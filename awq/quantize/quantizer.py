@@ -6,6 +6,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from typing import Dict, List, Optional
 from collections import defaultdict
+from transformers import LlavaForConditionalGeneration
 from awq.utils.calib_data import get_calib_dataset
 from awq.quantize.scale import apply_scale, apply_clip
 from awq.utils.utils import clear_memory, get_best_device
@@ -577,8 +578,12 @@ class AwqQuantizer:
 
         # patch layer 0 to catch input and kwargs
         modules[0] = Catcher(modules[0])
+        if isinstance(self.model, LlavaForConditionalGeneration):
+            device = next(self.model.language_model.parameters()).device
+        else:
+            device = next(self.model.parameters()).device
         try:
-            self.model(samples.to(next(self.model.parameters()).device))
+            self.model(samples.to(device))
         except ValueError:  # work with early exit
             pass
         modules[0] = modules[0].module  # restore
